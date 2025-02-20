@@ -46,11 +46,11 @@ export default function AuthPage() {
 
   const isPending = loginMutation.isPending || registerMutation.isPending;
 
-  // Move the redirect after all hook calls
-  if (user) {
-    setLocation("/");
-    return null;
-  }
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white flex items-center justify-center p-4">
