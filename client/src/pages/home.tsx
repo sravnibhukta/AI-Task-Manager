@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, Bot, Plus } from "lucide-react";
+import { Loader2, Bot, Plus, Sparkles } from "lucide-react";
 
 export default function Home() {
   const { toast } = useToast();
@@ -83,142 +83,159 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex h-screen items-center justify-center bg-gradient-to-b from-purple-50 to-white">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
       </div>
     );
   }
 
   return (
-    <div className="container max-w-3xl mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">Your Tasks</h1>
-        <p className="text-muted-foreground">
-          {completedTasks.length} completed, {pendingTasks.length} pending
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
+      <div className="container max-w-3xl mx-auto py-8 px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2 text-purple-800">Task Manager</h1>
+          <p className="text-purple-600">
+            {completedTasks.length} completed, {pendingTasks.length} pending
+          </p>
+        </div>
 
-      <div className="space-y-8">
-        {/* New Task Input */}
-        <Card>
-          <CardContent className="pt-6">
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit((data) => createTask.mutate(data))}
-                className="flex gap-2"
-              >
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormControl>
-                        <Input placeholder="Add a new task..." {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
+        <div className="space-y-8">
+          {/* New Task Input */}
+          <Card className="border-2 border-purple-100 shadow-lg hover:shadow-xl transition-shadow">
+            <CardContent className="pt-6">
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit((data) => createTask.mutate(data))}
+                  className="flex gap-3"
+                >
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input 
+                            placeholder="Add a new task..." 
+                            className="bg-white border-2 border-purple-100 focus:border-purple-300"
+                            {...field} 
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button 
+                    type="submit" 
+                    disabled={createTask.isPending}
+                    className="bg-purple-500 hover:bg-purple-600"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Task
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          {/* Pending Tasks */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4 text-purple-700">Pending Tasks</h2>
+            <div className="space-y-3">
+              {pendingTasks.map((task) => (
+                <Card key={task.id} className="hover:shadow-md transition-shadow border-purple-100">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <Checkbox
+                      checked={task.completed}
+                      onCheckedChange={(checked) =>
+                        updateTask.mutate({
+                          id: task.id,
+                          data: { completed: !!checked },
+                        })
+                      }
+                      className="border-2 border-purple-200"
+                    />
+                    <span className="text-purple-900">{task.title}</span>
+                    <span className="text-xs text-purple-400 ml-auto">
+                      Created {new Date(task.createdAt).toLocaleDateString()}
+                    </span>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Completed Tasks */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4 text-purple-700">Completed Tasks</h2>
+            <div className="space-y-3">
+              {completedTasks.map((task) => (
+                <Card key={task.id} className="hover:shadow-md transition-shadow bg-purple-50/50 border-purple-100">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <Checkbox
+                      checked={task.completed}
+                      onCheckedChange={(checked) =>
+                        updateTask.mutate({
+                          id: task.id,
+                          data: { completed: !!checked },
+                        })
+                      }
+                      className="border-2 border-purple-200"
+                    />
+                    <span className="line-through text-purple-400">{task.title}</span>
+                    <span className="text-xs text-purple-300 ml-auto">
+                      Created {new Date(task.createdAt).toLocaleDateString()}
+                    </span>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* AI Assistant */}
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Bot className="h-6 w-6 text-purple-500" />
+                <h2 className="text-xl font-semibold text-purple-800">AI Assistant</h2>
+              </div>
+              <p className="text-sm text-purple-600 mb-4">
+                Get task suggestions and analyze your tasks with AI
+              </p>
+              <div className="flex gap-3">
+                <Input
+                  placeholder="Enter a task to analyze..."
+                  value={analyzeText}
+                  onChange={(e) => setAnalyzeText(e.target.value)}
+                  className="bg-white border-2 border-purple-200 focus:border-purple-300"
                 />
-                <Button type="submit" disabled={createTask.isPending}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Task
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    if (!analyzeText) {
+                      toast({
+                        title: "Enter a task first",
+                        description: "Please enter a task before requesting suggestions.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    getSuggestions.mutate(analyzeText);
+                  }}
+                  disabled={getSuggestions.isPending}
+                  className="bg-white hover:bg-purple-100 border-2 border-purple-200"
+                >
+                  {getSuggestions.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
+                      Analyze
+                    </>
+                  )}
                 </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        {/* Pending Tasks */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4 text-purple-500">Pending Tasks</h2>
-          <div className="space-y-2">
-            {pendingTasks.map((task) => (
-              <Card key={task.id}>
-                <CardContent className="p-4 flex items-center gap-4">
-                  <Checkbox
-                    checked={task.completed}
-                    onCheckedChange={(checked) =>
-                      updateTask.mutate({
-                        id: task.id,
-                        data: { completed: !!checked },
-                      })
-                    }
-                  />
-                  <span>{task.title}</span>
-                  <span className="text-xs text-muted-foreground ml-auto">
-                    Created {new Date(task.createdAt).toLocaleDateString()}
-                  </span>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Completed Tasks */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4 text-purple-500">Completed Tasks</h2>
-          <div className="space-y-2">
-            {completedTasks.map((task) => (
-              <Card key={task.id}>
-                <CardContent className="p-4 flex items-center gap-4">
-                  <Checkbox
-                    checked={task.completed}
-                    onCheckedChange={(checked) =>
-                      updateTask.mutate({
-                        id: task.id,
-                        data: { completed: !!checked },
-                      })
-                    }
-                  />
-                  <span className="line-through text-muted-foreground">{task.title}</span>
-                  <span className="text-xs text-muted-foreground ml-auto">
-                    Created {new Date(task.createdAt).toLocaleDateString()}
-                  </span>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* AI Assistant */}
-        <Card className="bg-purple-50">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Bot className="h-5 w-5 text-purple-500" />
-              <h2 className="font-semibold">AI Assistant</h2>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Get task suggestions and analyze your tasks with AI
-            </p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Enter a task to analyze..."
-                value={analyzeText}
-                onChange={(e) => setAnalyzeText(e.target.value)}
-              />
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  if (!analyzeText) {
-                    toast({
-                      title: "Enter a task first",
-                      description: "Please enter a task before requesting suggestions.",
-                      variant: "destructive",
-                    });
-                    return;
-                  }
-                  getSuggestions.mutate(analyzeText);
-                }}
-                disabled={getSuggestions.isPending}
-              >
-                {getSuggestions.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Analyze"
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
