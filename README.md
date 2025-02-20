@@ -44,6 +44,9 @@ The project structure:
 - `/server` - Express backend
 - `/shared` - Shared types and schemas
 
+## Deployment
+
+This project can be easily deployed using Replit's deployment feature. Click the "Deploy" button in your workspace to publish your application.
 
 
 ## License
