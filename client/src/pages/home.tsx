@@ -6,15 +6,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertTaskSchema, type Task } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Bot, Plus } from "lucide-react";
 
 export default function Home() {
   const { toast } = useToast();
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [analyzeText, setAnalyzeText] = useState("");
 
   const form = useForm({
     resolver: zodResolver(insertTaskSchema),
@@ -57,19 +57,6 @@ export default function Home() {
     },
   });
 
-  const deleteTask = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/tasks/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-      toast({
-        title: "Task deleted",
-        description: "Your task has been deleted successfully.",
-      });
-    },
-  });
-
   const getSuggestions = useMutation({
     mutationFn: async (task: string) => {
       const res = await apiRequest("POST", "/api/suggestions", { task });
@@ -85,23 +72,14 @@ export default function Home() {
         });
         return;
       }
-      setShowSuggestions(true);
       suggestions.forEach((suggestion) => {
         createTask.mutate({ title: suggestion, completed: false });
       });
     },
-    onError: (error) => {
-      toast({
-        title: "Error getting suggestions",
-        description: "Unable to get AI suggestions at this time. Please try again later.",
-        variant: "destructive",
-      });
-    },
   });
 
-  const onSubmit = (data: { title: string; completed: boolean }) => {
-    createTask.mutate(data);
-  };
+  const pendingTasks = tasks?.filter(task => !task.completed) || [];
+  const completedTasks = tasks?.filter(task => task.completed) || [];
 
   if (isLoading) {
     return (
@@ -112,45 +90,115 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Task Manager</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="flex gap-4 items-end"
-            >
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormControl>
-                      <Input placeholder="Add a new task..." {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
+    <div className="container max-w-3xl mx-auto py-8 px-4">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold mb-2">Your Tasks</h1>
+        <p className="text-muted-foreground">
+          {completedTasks.length} completed, {pendingTasks.length} pending
+        </p>
+      </div>
+
+      <div className="space-y-8">
+        {/* New Task Input */}
+        <Card>
+          <CardContent className="pt-6">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit((data) => createTask.mutate(data))}
+                className="flex gap-2"
+              >
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input placeholder="Add a new task..." {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" disabled={createTask.isPending}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Task
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
+        {/* Pending Tasks */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4 text-purple-500">Pending Tasks</h2>
+          <div className="space-y-2">
+            {pendingTasks.map((task) => (
+              <Card key={task.id}>
+                <CardContent className="p-4 flex items-center gap-4">
+                  <Checkbox
+                    checked={task.completed}
+                    onCheckedChange={(checked) =>
+                      updateTask.mutate({
+                        id: task.id,
+                        data: { completed: !!checked },
+                      })
+                    }
+                  />
+                  <span>{task.title}</span>
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    Created {new Date(task.createdAt).toLocaleDateString()}
+                  </span>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Completed Tasks */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4 text-purple-500">Completed Tasks</h2>
+          <div className="space-y-2">
+            {completedTasks.map((task) => (
+              <Card key={task.id}>
+                <CardContent className="p-4 flex items-center gap-4">
+                  <Checkbox
+                    checked={task.completed}
+                    onCheckedChange={(checked) =>
+                      updateTask.mutate({
+                        id: task.id,
+                        data: { completed: !!checked },
+                      })
+                    }
+                  />
+                  <span className="line-through text-muted-foreground">{task.title}</span>
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    Created {new Date(task.createdAt).toLocaleDateString()}
+                  </span>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* AI Assistant */}
+        <Card className="bg-purple-50">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Bot className="h-5 w-5 text-purple-500" />
+              <h2 className="font-semibold">AI Assistant</h2>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Get task suggestions and analyze your tasks with AI
+            </p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter a task to analyze..."
+                value={analyzeText}
+                onChange={(e) => setAnalyzeText(e.target.value)}
               />
               <Button
-                type="submit"
-                disabled={createTask.isPending}
-                className="w-24"
-              >
-                {createTask.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Add"
-                )}
-              </Button>
-              <Button
-                type="button"
                 variant="secondary"
                 onClick={() => {
-                  const taskText = form.getValues("title");
-                  if (!taskText) {
+                  if (!analyzeText) {
                     toast({
                       title: "Enter a task first",
                       description: "Please enter a task before requesting suggestions.",
@@ -158,57 +206,19 @@ export default function Home() {
                     });
                     return;
                   }
-                  getSuggestions.mutate(taskText);
+                  getSuggestions.mutate(analyzeText);
                 }}
                 disabled={getSuggestions.isPending}
-                className="flex items-center gap-2"
               >
                 {getSuggestions.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Suggest
-                  </>
+                  "Analyze"
                 )}
               </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4">
-        {tasks?.map((task) => (
-          <Card key={task.id}>
-            <CardContent className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Checkbox
-                  checked={task.completed}
-                  onCheckedChange={(checked) =>
-                    updateTask.mutate({
-                      id: task.id,
-                      data: { completed: !!checked },
-                    })
-                  }
-                />
-                <span
-                  className={`${
-                    task.completed ? "line-through text-muted-foreground" : ""
-                  }`}
-                >
-                  {task.title}
-                </span>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => deleteTask.mutate(task.id)}
-              >
-                Delete
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
