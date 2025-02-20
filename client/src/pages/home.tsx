@@ -133,12 +133,16 @@ export default function Home() {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() =>
-                  getSuggestions.mutate(form.getValues("title"))
-                }
-                disabled={getSuggestions.isPending || !form.getValues("title")}
+                onClick={() => {
+                  const taskText = form.getValues("title");
+                  if (taskText) {
+                    getSuggestions.mutate(taskText);
+                  }
+                }}
+                disabled={getSuggestions.isPending}
+                className="flex items-center gap-2"
               >
-                <Sparkles className="h-4 w-4 mr-2" />
+                <Sparkles className="h-4 w-4" />
                 Suggest
               </Button>
             </form>
