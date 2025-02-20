@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertTaskSchema, type Task } from "@shared/schema";
@@ -10,10 +11,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, Bot, Plus, Sparkles } from "lucide-react";
+import { Loader2, Bot, Plus, Sparkles, LogOut } from "lucide-react";
 
 export default function Home() {
   const { toast } = useToast();
+  const { user, logoutMutation } = useAuth();
   const [analyzeText, setAnalyzeText] = useState("");
 
   const form = useForm({
@@ -92,11 +94,25 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
       <div className="container max-w-3xl mx-auto py-8 px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 text-purple-800">Task Manager</h1>
-          <p className="text-purple-600">
-            {completedTasks.length} completed, {pendingTasks.length} pending
-          </p>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2 text-purple-800">Task Manager</h1>
+            <p className="text-purple-600">
+              {completedTasks.length} completed, {pendingTasks.length} pending
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <p className="text-purple-700">Welcome, {user?.username}</p>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => logoutMutation.mutate()}
+              className="border-2 border-purple-200 hover:bg-purple-100"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-8">
