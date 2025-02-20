@@ -4,6 +4,11 @@ import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function getSuggestions(task: string): Promise<string[]> {
+  if (!process.env.OPENAI_API_KEY) {
+    console.error("OpenAI API key is not configured");
+    return [];
+  }
+
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -30,6 +35,9 @@ export async function getSuggestions(task: string): Promise<string[]> {
     return Array.isArray(result.suggestions) ? result.suggestions : [];
   } catch (error) {
     console.error("Failed to get AI suggestions:", error);
+    if (error.status === 429) {
+      console.error("OpenAI API rate limit exceeded or insufficient quota");
+    }
     return [];
   }
 }

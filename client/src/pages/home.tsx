@@ -77,9 +77,24 @@ export default function Home() {
       return data.suggestions as string[];
     },
     onSuccess: (suggestions) => {
+      if (suggestions.length === 0) {
+        toast({
+          title: "No suggestions available",
+          description: "The AI service is currently unavailable. Please try again later.",
+          variant: "destructive",
+        });
+        return;
+      }
       setShowSuggestions(true);
       suggestions.forEach((suggestion) => {
         createTask.mutate({ title: suggestion, completed: false });
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error getting suggestions",
+        description: "Unable to get AI suggestions at this time. Please try again later.",
+        variant: "destructive",
       });
     },
   });
@@ -135,15 +150,27 @@ export default function Home() {
                 variant="secondary"
                 onClick={() => {
                   const taskText = form.getValues("title");
-                  if (taskText) {
-                    getSuggestions.mutate(taskText);
+                  if (!taskText) {
+                    toast({
+                      title: "Enter a task first",
+                      description: "Please enter a task before requesting suggestions.",
+                      variant: "destructive",
+                    });
+                    return;
                   }
+                  getSuggestions.mutate(taskText);
                 }}
                 disabled={getSuggestions.isPending}
                 className="flex items-center gap-2"
               >
-                <Sparkles className="h-4 w-4" />
-                Suggest
+                {getSuggestions.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Suggest
+                  </>
+                )}
               </Button>
             </form>
           </Form>
